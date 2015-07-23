@@ -1,3 +1,7 @@
+# git ignore
+.DS_Store
+
+.RData
 # History files
 .Rhistory
 .Rapp.history
@@ -6,6 +10,7 @@
 *-Ex.R
 
 # RStudio files
+.Rproj.user
 .Rproj.user/
 
 # produced vignettes
