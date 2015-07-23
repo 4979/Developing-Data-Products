@@ -314,7 +314,7 @@ It's just to know, how is the temperature varies every year on same date. To do 
   });
   ```
   ```{r}
-  // Register Output Binding.
+  # Register Output Binding.
   Shiny.outputBindings.register(networkOutputBinding, 'prabhatkumar.networkbinding');
   ```
   
