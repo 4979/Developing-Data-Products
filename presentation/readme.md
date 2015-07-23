@@ -1,3 +1,5 @@
+# Documentation
+
 ## About
 > D3 and Shiny App for Data Visualization.
 
@@ -13,7 +15,7 @@ It's just to know, how is the temperature varies every year on same date. To do 
   
 ## Working Principle
 
-[A] This is the ***server logic*** for a Shiny Web Application:
+[A] This is the **server logic** for a Shiny Web Application:
 
   1. First, data is taken by ```server.R``` in ```"data.csv"``` format,
   2. Then, reactive expressions is used to get the data and translate relative paths to server-friendly paths,
@@ -47,7 +49,14 @@ It's just to know, how is the temperature varies every year on same date. To do 
   })
   ```
 
-[A] This is the ***User-Interface Definition*** for a Shiny Web Application:
+[B] This is the **User-Interface Definition** for a Shiny Web Application:
+  
+  1. First, ```shinyUI``` method give header of the working app,
+  2. sidebar panel to get data source from server as well as from local,
+  3. If you choose from local, upload can be done in ```.csv``` format,
+  4. simultaneously, main panel can take the HTML partial page through ```includeHTML``` method,
+     where all logic written by using D3.js to draw csv format based data visualization.
+  5. It have also feature to redraw the canvas, when you are uploading data from local.
   
   ```{r}
   library(shiny)
@@ -103,7 +112,8 @@ It's just to know, how is the temperature varies every year on same date. To do 
 
 ## Editor
    
-   RStudio
+1. RStudio
+2. Sublime Text
 
 ## Data Set
 ```
@@ -124,3 +134,4 @@ Date,Morning,Evening
 - Date updated: 24-July-2015
 
 **Copyright**: © 2015 Prabhat Kumar, All Rights reserved.
+
