@@ -15,11 +15,11 @@ It's just to know, how is the temperature varies every year on same date. To do 
   
 ## Working Principle
 
-[A] This is the **server logic** for a Shiny Web Application:
+**[A]** This is the **server logic** for a Shiny Web Application:
 
   1. First, data is taken by ```server.R``` in ```"data.csv"``` format,
   2. Then, reactive expressions is used to get the data and translate relative paths to server-friendly paths,
-  3. When, in-case of data changes, again it update the bar plot.
+  3. When, in-case of data changes, again it updates the d3 plot.
   
   ```{r}
   library(shiny)
@@ -49,7 +49,7 @@ It's just to know, how is the temperature varies every year on same date. To do 
   })
   ```
 
-[B] This is the **User-Interface Definition** for a Shiny Web Application:
+**[B]** This is the **User-Interface Definition** for a Shiny Web Application:
   
   1. First, ```shinyUI``` method give header of the working app,
   2. sidebar panel to get data source from server as well as from local,
@@ -100,6 +100,225 @@ It's just to know, how is the temperature varies every year on same date. To do 
     )
   ))
   ```
+  
+**[C]** This is the **Data Visualization Definition** for a Shiny Web Application:
+  
+  1. ```Shiny.OutputBinding()``` is a custom output component, that is used for a need of output binding, it's an object created that tells Shiny how to identify instances of the component and how to interact with them.
+  2. The default implementation in ```Shiny.OutputBinding``` reads the data-output-id attribute and falls back to the element's id if not present.
+  3. Now, I have added ```D3.js``` from CDN and called ```renderValue(el, data)```,
+  4. After that, I have set canvas dimension and written logic to remove the old graph, append a new one, worked with dates, develop functions to group the bars, labels, tooltip on mouseover-mouseout events, and finally added the text label, respectively.
+  5. In Last, i have register "Output Binding" - created an output binding object, that needs to tell Shiny to use it.
+  ```Shiny.outputBindings.register(networkOutputBinding, 'prabhatkumar.networkbinding');```
+  
+  ```{r}
+  var networkOutputBinding = new Shiny.OutputBinding();
+  ```
+  ```{r}
+  $.extend(networkOutputBinding, {
+    find: function(scope) {
+        return $(scope).find('.shiny-network-output');
+    },
+    renderValue: function(el, data) {
+        // to set canvas dimension.
+        var margin = {
+                top: 80,
+                right: 20,
+                bottom: 80,
+                left: 20
+            },
+            width = 800 - margin.right - margin.left,
+            height = 800 - margin.top - margin.bottom;
+
+        // remove the old graph.
+        var svg = d3.select(el).select("svg");
+        svg.remove();
+
+        $(el).html("");
+
+        // append a new one.
+        svg = d3.select(el).append("svg")
+            .attr("width", width + margin.right + margin.left)
+            .attr("height", height + margin.top + margin.bottom);
+
+        var perfdata = new Array();
+
+        var parse = d3.time.format("%m/%d/%Y").parse,
+            format = d3.time.format("%Y")
+
+        for (var inc = 0; inc < data.Date.length; inc++) {
+            perfdata[inc] = {
+                date: parse(data.Date[inc]),
+                perf: parseFloat(data.Morning[inc]),
+                symbol: "Min°C"
+            };
+            perfdata[inc + data.Date.length] = {
+                date: parse(data.Date[inc]),
+                perf: parseFloat(data.Evening[inc]),
+                symbol: "Max°C"
+            };
+        }
+
+        // Nest stock values by symbol.
+        symbols = d3.nest()
+            .key(function(d) {
+                return d.symbol;
+            })
+            .entries(perfdata);
+
+        var x = d3.time.scale()
+            .range([0, width - 60]);
+
+        var y = d3.scale.linear()
+            .range([height - 20, 0]);
+
+        var duration = 1500,
+            delay = 500;
+
+        var color = d3.scale.category10();
+
+        // do the minimum and maximum dates
+        x.domain([
+            parse(data.Date[0]),
+            parse(data.Date[data.Date.length - 1])
+        ]);
+
+        var g = svg.selectAll("g")
+            .data(symbols)
+            .enter().append("g")
+            .attr("class", "symbol");
+
+        groupedBar();
+
+        function groupedBar() {
+            x = d3.scale.ordinal()
+                .domain(symbols[0].values.map(function(d) {
+                    return d.date;
+                }))
+                .rangeBands([0, width - 60], .1);
+
+            var x1 = d3.scale.ordinal()
+                .domain(symbols.map(function(d) {
+                    return d.key;
+                }))
+                .rangeBands([0, x.rangeBand()]);
+
+            var y0 = Math.max(Math.abs(d3.min(symbols.map(function(d) {
+                return d3.min(d.values.map(function(d) {
+                    return d.perf;
+                }));
+            }))), d3.max(symbols.map(function(d) {
+                return d3.max(d.values.map(function(d) {
+                    return d.perf;
+                }));
+            })));
+
+            y.domain([-y0, y0])
+                .range([height, 0])
+                .nice();
+
+            var yAxis = d3.svg.axis().scale(y).orient("left");
+            // for labels.
+            svg.selectAll(".labels")
+                .data(symbols[0].values.map(function(d) {
+                    return d.date;
+                }))
+                .enter().append("text")
+                .attr("class", "labels")
+                .attr("text-anchor", "middle")
+                .attr("x", function(d, i) {
+                    return x(i) + x.rangeBand() / 2;
+                })
+                .attr("y", height / 2 + 15)
+                .text(function(d) {
+                    return format(d);
+                })
+                .style("font-size", "12px")
+                .style("fill-opacity", 0.8);
+
+            var g = svg.selectAll(".symbol");
+
+            var t = g.transition().duration(duration);
+
+            g.each(function(p, j) {
+                d3.select(this).selectAll("rect")
+                    .data(function(d) {
+                        return d.values;
+                    })
+                    .enter().append("rect")
+                    .attr("x", function(d) {
+                        return x(d.date) + x1(p.key);
+                    })
+                    .attr("y", function(d, i) {
+                        return y(Math.max(0, d.perf));
+                    })
+
+                .attr("width", x1.rangeBand())
+                    .attr("height", function(d, i) {
+                        return Math.abs(y(d.perf) - y(0));
+                    })
+
+                .style("fill", color(p.key))
+                    .style("fill-opacity", 1e-6)
+
+                // for tooltip.
+                .on('mouseover', function(d, i) {
+                        d3.select(this)
+                            .style('fill', 'gray')
+                            .style("z-index", 9);
+                        statusText
+                            .text(p.key + " " + d.perf)
+                            .attr('fill', color(p.key))
+                            .attr("text-anchor", d.perf < 0 ? "begin" : "begin")
+                            .attr("x", x(d.date) + x1(p.key) + x.rangeBand() / 2)
+                            .attr("y", y(d.perf))
+                            .attr("transform", d.perf < 0 ? "rotate(9 " + (x(d.date) + x1(p.key) + x.rangeBand() / 4) + "," + y(d.perf) + ")" : "rotate(-9 " + (x(d.date) + x1(p.key) + x.rangeBand() / 4) + "," + y(d.perf) + ")");
+                    })
+                    .on('mouseout', function(d, i) {
+                        statusText
+                            .text('');
+                        d3.select(this).style('fill', color(p.key));
+                    })
+                    .transition()
+                    .duration(duration)
+                    .style("fill-opacity", 1);
+
+                var statusText = svg.append('svg:text');
+
+            });
+
+            // Add the text label for the X axis
+            svg.append("text")
+                .attr("transform", "translate(" + (width / 2) + " ," + ((height / 2.2) + margin.bottom) + ")")
+                .style("text-anchor", "middle")
+                .text("Year");
+
+            // Add the text label for the Y axis
+            svg.append("text")
+                .attr("transform", "rotate(-90)")
+                .attr("y", 4)
+                .attr("x", margin.top - (height / 2.4))
+                .attr("dy", ".60em")
+                .style("text-anchor", "end")
+                .text("Temp in °C");
+
+            // Add the title
+            svg.append("text")
+                .attr("x", (width / 2))
+                .attr("y", 20)
+                .attr("text-anchor", "middle")
+                .style("font-size", "14px")
+                .style("text-decoration", "none")
+                .text("Temperature Vs. Year");
+        };
+      }
+  });
+  ```
+  ```{r}
+  // Register Output Binding.
+  Shiny.outputBindings.register(networkOutputBinding, 'prabhatkumar.networkbinding');
+  ```
+  
+  **Note**: ```d3.js``` given methods to work with drawing part of this App.
 
 ## Technology
 
@@ -134,4 +353,3 @@ Date,Morning,Evening
 - Date updated: 24-July-2015
 
 **Copyright**: © 2015 Prabhat Kumar, All Rights reserved.
-
