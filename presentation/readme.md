@@ -13,7 +13,7 @@ It's just to know, how is the temperature varies every year on same date. To do 
   
 ## Working Principle
 
-[A] This is the server logic for a Shiny Web Application:
+[A] This is the ***server logic*** for a Shiny Web Application:
 
   1. First, data is taken by ```server.R``` in ```"data.csv"``` format,
   2. Then, reactive expressions is used to get the data and translate relative paths to server-friendly paths,
@@ -46,7 +46,52 @@ It's just to know, how is the temperature varies every year on same date. To do 
     })
   })
   ```
+
+[A] This is the ***User-Interface Definition*** for a Shiny Web Application:
   
+  ```{r}
+  library(shiny)
+  ```
+  ```{r}
+  reactiveBar <- function (outputId) {
+    HTML(paste("<div id=\"", outputId, "\" class=\"shiny-network-output\"><svg /></div>", sep=""))
+  }
+
+  shinyUI(pageWithSidebar(
+  
+  headerPanel(HTML("D3 and Shiny App for Data Visualization.")),
+  
+  sidebarPanel(
+    checkboxInput(inputId= "dataSource", label="Use a file stored on my local machine.", value=FALSE),
+    conditionalPanel(
+      condition = "input.dataSource == false",
+      textInput(inputId="url", label="Data File URL:", value="./data.csv"),
+      helpText(HTML("<div style=\"text-indent:2px\">Download the sample dataset <a href=\"data.csv\">here!</a></div>"))
+    ),
+    conditionalPanel(
+      condition = "input.dataSource == true",            
+      fileInput(inputId = "file", label="Data in 'CSV' to plot:"),
+      helpText(HTML("<div style=\"color: red; font-weight: bold\">Warning:</div> Local file uploads in 
+                    Shiny are <strong>very</strong> experimental.<br/>
+                    I have made this just to do some experiment.
+                    <p>If you have any trouble using this feature,<br/>
+                    Please ignore it."))
+    ),
+    HTML("<hr />"),
+    helpText(
+      HTML("All source available on <a href = \"https://github.com/4979/Developing-Data-Products\">GitHub</a>.<br/>by Prabhat Kumar.<br/>Date: 22-July-2015.")
+    ),
+    HTML("<hr />")
+  ),
+  # Show a plot through D3.js
+  # Reactive output displayed as a result of server calculations.
+    mainPanel(
+      includeHTML("d3-shiny-app.html"),
+      reactiveBar(outputId = "perfbarplot")
+    )
+  ))
+  ```
+
 ## Technology
 
 1. R
@@ -55,6 +100,10 @@ It's just to know, how is the temperature varies every year on same date. To do 
 4. SVG
 5. CSS
 6. Markdown
+
+## Editor
+   
+   RStudio
 
 ## Data Set
 ```
