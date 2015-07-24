@@ -8,7 +8,7 @@
  */
 d3 = function() {
   var d3 = {
-    version: "3.1.9"
+    version: "v3.1.9"
   };
   if (!Date.now) Date.now = function() {
     return +new Date();
