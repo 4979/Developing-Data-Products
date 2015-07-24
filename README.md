@@ -26,9 +26,13 @@ It's just to know, how is the temperature varies every year on same date. To do 
 1. RStudio
 2. Sublime Text
 
-## Documentation/Presentation
+## Documentation
 
-   Please see [here](https://github.com/4979/Developing-Data-Products/tree/master/presentation)...
+  Please see [here](https://github.com/4979/Developing-Data-Products/blob/master/presentation/readme.md)...
+  
+## Presentation
+
+  Please see [here](http://rpubs.com/Prabhat79/94490)...
 
 > by Prabhat Kumar, Many Thanks.
 
